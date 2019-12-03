@@ -1,0 +1,61 @@
+{
+  "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/eslint-recommended",
+      "plugin:@typescript-eslint/recommended",
+      "standard"
+  ],
+  "env": {
+      "node": true
+  },
+  "globals": {
+      "it": "readonly",
+      "expect": "readonly",
+      "describe": "readonly",
+      "BigInt": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+      "prettier",
+      "@typescript-eslint"
+  ],
+  "settings": {
+      "import/parsers": {
+          "@typescript-eslint/parser": [".ts"]
+      },
+      "import/resolver": {
+          "typescript": {}
+      }
+  },
+  "parserOptions": {
+      "ecmaVersion": 2019,
+      "project": "./tsconfig.json"
+  },
+  "rules": {
+      "prettier/prettier": "error",
+      "arrow-parens": [2, "as-needed"],
+      "space-before-function-paren": "off",
+      "generator-star-spacing": 0,
+      "no-trailing-spaces": [ 0, { "skipBlankLines": true } ],
+      "camelcase": "error",
+      "@typescript-eslint/camelcase": "error",
+      "@typescript-eslint/indent": ["error", 2],
+      "@typescript-eslint/consistent-type-definitions": [ "error"],
+      "@typescript-eslint/no-floating-promises": [ "error" ],
+      "@typescript-eslint/no-for-in-array": ["error"],
+      "@typescript-eslint/no-this-alias": [ "error" ],
+      "@typescript-eslint/prefer-readonly": [ "error" ],
+      "@typescript-eslint/promise-function-async": [ "error" ],
+      "@typescript-eslint/require-await": [ "error" ],        
+      "@typescript-eslint/member-delimiter-style": [2, {
+          "multiline": {
+              "delimiter": "none",
+              "requireLast": false
+          },
+          "singleline": {
+              "delimiter": "semi",
+              "requireLast": false
+          }
+      }]
+  }
+}
