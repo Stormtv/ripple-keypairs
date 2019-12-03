@@ -58,7 +58,7 @@ export const sha512Half = (
   for (const content of hashables) {
     if (typeof content === 'string') {
       if (isValidHex(content)) {
-        hash.update(Buffer.from(content.toUpperCase(), 'hex'))
+        hash.update(Buffer.from(content, 'hex'))
       } else {
         hash.update(Buffer.from(content))
       }

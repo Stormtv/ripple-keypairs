@@ -24,7 +24,7 @@ exports.sha512Half = (hashables) => {
     for (const content of hashables) {
         if (typeof content === 'string') {
             if (exports.isValidHex(content)) {
-                hash.update(Buffer.from(content.toUpperCase(), 'hex'));
+                hash.update(Buffer.from(content, 'hex'));
             }
             else {
                 hash.update(Buffer.from(content));
