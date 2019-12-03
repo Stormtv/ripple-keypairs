@@ -1,4 +1,4 @@
-{
+export default {
   "secp256k1": {
     "seed": "sp5fghtJtpUorTwvof1NpDXAzNwf5",
     "keypair": {

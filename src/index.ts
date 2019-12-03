@@ -20,7 +20,7 @@ interface DecodeSeedOpts {
 interface DecodedSeed {
   bytes: Buffer
   version: number[]
-  type: SignatureType | null
+  type?: SignatureType
 }
 
 interface DecodeOpts {
@@ -29,6 +29,12 @@ interface DecodeOpts {
   versionTypes?: ['ed25519', 'secp256k1']
 }
 
+interface GenerateOpts {
+  algorithm?: SignatureType
+  entropy?: Buffer | number[]
+}
+
+const ACCOUNT_ID = 0
 const NODE_PUBLIC = 28
 const FAMILY_SEED = 0x21 // 33
 const ED25519_SEED = [0x01, 0xe1, 0x4b]
@@ -38,13 +44,24 @@ const isED25519 = (key: Buffer): boolean => {
   return key.length === 33 && key[0] === 0xed
 }
 
+export const isValidHex = (string: string): boolean => {
+  return (
+    string.length % 2 === 0 &&
+    string.match(/([0-9]|[a-f])/gi)?.length === string.length
+  )
+}
+
 export const sha512Half = (
   hashables: (string | number[] | Buffer)[]
 ): Buffer => {
   const hash = createHash('sha512')
   for (const content of hashables) {
     if (typeof content === 'string') {
-      hash.update(Buffer.from(content.toLowerCase()))
+      if (isValidHex(content)) {
+        hash.update(Buffer.from(content.toUpperCase(), 'hex'))
+      } else {
+        hash.update(Buffer.from(content))
+      }
     } else if (Buffer.isBuffer(content)) {
       hash.update(content)
     } else {
@@ -229,13 +246,6 @@ const derivePrivateKey = (
     .mod(order)
 }
 
-export const isValidHex = (string: string): boolean => {
-  return (
-    string.length % 2 === 0 &&
-    string.match(/([0-9]|[a-f])/gi)?.length === string.length
-  )
-}
-
 export const publicKeyFromPrivateKey = (privateKey: string): string => {
   const skBuffer = Buffer.from(privateKey, 'hex')
   if (isED25519(skBuffer)) {
@@ -310,22 +320,33 @@ const encode = (
   return encodeVersioned(bytes, versions, opts.expectedLength)
 }
 
-export const generateSeed = (
-  type: SignatureType = 'ed25519',
-  rawSeed?: Buffer
+export const encodeSeed = (
+  entropy: Buffer | number[],
+  algorithm: SignatureType = 'ed25519'
 ): string => {
-  rawSeed = rawSeed ?? randomBytes(16)
-  if (rawSeed.length !== 16) {
+  if (entropy.length !== 16) {
     throw new Error('raw seed must have length 16')
   }
-  if (type !== 'ed25519' && type !== 'secp256k1') {
+  if (algorithm !== 'ed25519' && algorithm !== 'secp256k1') {
     throw new Error('type must be ed25519 or secp256k1')
   }
   const opts = {
     expectedLength: 16,
-    versions: type === 'ed25519' ? ED25519_SEED : [FAMILY_SEED]
+    versions: algorithm === 'ed25519' ? ED25519_SEED : [FAMILY_SEED]
   }
-  return encode(rawSeed, opts)
+  if (!Buffer.isBuffer(entropy)) {
+    entropy = Buffer.from(entropy)
+  }
+  return encode(entropy, opts)
+}
+
+export const generateSeed = (
+  options: GenerateOpts = {
+    algorithm: 'ed25519'
+  }
+): string => {
+  options.entropy = options.entropy ?? randomBytes(16)
+  return encodeSeed(options.entropy, options.algorithm)
 }
 
 const decodeRaw = (base58string: string): Buffer => {
@@ -388,7 +409,7 @@ const decode = (base58string: string, opts: DecodeOpts): DecodedSeed => {
       return {
         version,
         bytes: payload,
-        type: types ? types[i] : null
+        type: types ? types[i] : undefined
       }
     }
   }
@@ -415,7 +436,7 @@ export const decodeSeed = (
 export const deriveKeypair = (
   encodedSeed: string,
   accountIndex = 0
-): { privateKey: string; publicKey: string } | null => {
+): { privateKey: string; publicKey: string } => {
   const decodedSeed = decodeSeed(encodedSeed)
   const seedBytes = decodedSeed.bytes
   if (decodedSeed.type === 'ed25519') {
@@ -434,8 +455,7 @@ export const deriveKeypair = (
     const publicKey = publicKeyFromPrivateKey(privateKey)
     return { privateKey, publicKey }
   } else {
-    console.info('Invalid Signature Algo')
-    return null
+    throw new Error('Invalid Signature Algo')
   }
 }
 
@@ -503,7 +523,8 @@ const computePublicKeyHash = (publicKey: Buffer | string): Buffer => {
     .digest()
 }
 
-const encodeAccountID = (bytes: Buffer): string => {
+export const encodeAccountID = (bytes: Buffer | number[]): string => {
+  if (!Buffer.isBuffer(bytes)) bytes = Buffer.from(bytes)
   const opts = { versions: [0], expectedLength: 20 }
   return encode(bytes, opts)
 }
@@ -512,9 +533,15 @@ export const deriveAddress = (publicKey: string | Buffer): string => {
   return encodeAccountID(computePublicKeyHash(publicKey))
 }
 
-const decodeNodePublic = (base58string: string): Buffer => {
+export const decodeNodePublic = (base58string: string): Buffer => {
   const opts = { versions: [NODE_PUBLIC], expectedLength: 33 }
   return decode(base58string, opts).bytes
+}
+
+export const encodeNodePublic = (bytes: number[] | Buffer): string => {
+  if (!Buffer.isBuffer(bytes)) bytes = Buffer.from(bytes)
+  const opts = { versions: [NODE_PUBLIC], expectedLength: 33 }
+  return encode(bytes, opts)
 }
 
 const accountPublicFromPublicGenerator = (publicGenBytes: Buffer): string => {
@@ -530,4 +557,37 @@ export const deriveNodeAddress = (publicKey: string): string => {
   const generatorBytes = decodeNodePublic(publicKey)
   const accountPublicBytes = accountPublicFromPublicGenerator(generatorBytes)
   return deriveAddress(accountPublicBytes)
+}
+
+export const decodeAccountID = (accountId: string): Buffer => {
+  const opts = { versions: [ACCOUNT_ID], expectedLength: 20 }
+  return decode(accountId, opts).bytes
+}
+
+export const isValidAddress = (address: string): boolean => {
+  try {
+    decodeAccountID(address)
+  } catch (e) {
+    return false
+  }
+  return true
+}
+
+export default {
+  sha512Half,
+  isValidHex,
+  publicKeyFromPrivateKey,
+  encodeSeed,
+  generateSeed,
+  decodeSeed,
+  deriveKeypair,
+  sign,
+  verify,
+  encodeAccountID,
+  deriveAddress,
+  decodeNodePublic,
+  encodeNodePublic,
+  deriveNodeAddress,
+  decodeAccountID,
+  isValidAddress
 }

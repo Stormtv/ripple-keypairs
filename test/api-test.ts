@@ -1,33 +1,32 @@
 'use strict' // eslint-disable-line strict
-
-const assert = require('assert')
-const fixtures = require('./fixtures/api.json')
-const api = require('../dist')
-const decodeSeed = api.decodeSeed
+import api from '../dist/index'
+import { assert } from 'chai'
+import 'mocha'
+import fixtures from './fixtures/api'
 const entropy = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
 describe('api', () => {
   it('generateSeed - secp256k1', () => {
-    assert.strictEqual(api.generateSeed({entropy}), fixtures.secp256k1.seed)
+    assert.strictEqual(api.generateSeed({entropy, algorithm: 'secp256k1'}), fixtures.secp256k1.seed)
   })
 
   it('generateSeed - secp256k1, random', () => {
-    const seed = api.generateSeed()
+    const seed = api.generateSeed({algorithm: 'secp256k1'})
     assert(seed.charAt(0) === 's')
-    const {type, bytes} = decodeSeed(seed)
+    const {type, bytes} = api.decodeSeed(seed)
     assert(type === 'secp256k1')
     assert(bytes.length === 16)
   })
 
   it('generateSeed - ed25519', () => {
-    assert.strictEqual(api.generateSeed({entropy, algorithm: 'ed25519'}),
+    assert.strictEqual(api.generateSeed({entropy}),
       fixtures.ed25519.seed)
   })
 
   it('generateSeed - ed25519, random', () => {
-    const seed = api.generateSeed({algorithm: 'ed25519'})
+    const seed = api.generateSeed()
     assert(seed.slice(0, 3) === 'sEd')
-    const {type, bytes} = decodeSeed(seed)
+    const {type, bytes} = api.decodeSeed(seed)
     assert(type === 'ed25519')
     assert(bytes.length === 16)
   })
@@ -55,7 +54,7 @@ describe('api', () => {
   it('sign - secp256k1', () => {
     const privateKey = fixtures.secp256k1.keypair.privateKey
     const message = fixtures.secp256k1.message
-    const messageHex = (Buffer.from(message, 'utf8')).toString('hex')
+    const messageHex = Buffer.from(message, 'utf8').toString('hex').toUpperCase()
     const signature = api.sign(messageHex, privateKey)
     assert.strictEqual(signature, fixtures.secp256k1.signature)
   })
@@ -64,14 +63,14 @@ describe('api', () => {
     const signature = fixtures.secp256k1.signature
     const publicKey = fixtures.secp256k1.keypair.publicKey
     const message = fixtures.secp256k1.message
-    const messageHex = (Buffer.from(message, 'utf8')).toString('hex')
-    assert(api.verify(messageHex, signature, publicKey))
+    const messageHex = Buffer.from(message, 'utf8').toString('hex').toUpperCase()
+    assert(api.verify(messageHex, signature, publicKey), 'Invalid Signature')
   })
 
   it('sign - ed25519', () => {
     const privateKey = fixtures.ed25519.keypair.privateKey
     const message = fixtures.ed25519.message
-    const messageHex = (Buffer.from(message, 'utf8')).toString('hex')
+    const messageHex = Buffer.from(message, 'utf8').toString('hex').toUpperCase()
     const signature = api.sign(messageHex, privateKey)
     assert.strictEqual(signature, fixtures.ed25519.signature)
   })
@@ -80,7 +79,7 @@ describe('api', () => {
     const signature = fixtures.ed25519.signature
     const publicKey = fixtures.ed25519.keypair.publicKey
     const message = fixtures.ed25519.message
-    const messageHex = (Buffer.from(message, 'utf8')).toString('hex')
+    const messageHex = Buffer.from(message, 'utf8').toString('hex').toUpperCase()
     assert(api.verify(messageHex, signature, publicKey))
   })
 
@@ -91,7 +90,7 @@ describe('api', () => {
   })
 
   it('Random Address', () => {
-    const seed = api.generateSeed()
+    const seed = api.generateSeed({algorithm: 'secp256k1'})
     const keypair = api.deriveKeypair(seed)
     const address = api.deriveAddress(keypair.publicKey)
     assert(address[0] === 'r')

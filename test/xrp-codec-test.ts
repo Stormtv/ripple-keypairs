@@ -1,15 +1,14 @@
-/* eslint-disable no-unused-expressions/no-unused-expressions */
-
 'use strict'
+import api from '../dist'
+import { assert } from 'chai'
+import 'mocha'
 
-const assert = require('assert')
-const api = require('../dist/ripple-address-codec')
-
-function toHex(bytes) {
+const toHex = (bytes: number[] | Buffer): string => {
+  if (Buffer.isBuffer(bytes)) return bytes.toString('hex').toUpperCase()
   return Buffer.from(bytes).toString('hex').toUpperCase()
 }
 
-function toBytes(hex) {
+const toBytes = (hex: string): number[] => {
   return Buffer.from(hex, 'hex').toJSON().data
 }
 

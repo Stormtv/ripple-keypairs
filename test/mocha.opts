@@ -1,1 +1,6 @@
---reporter spec --timeout 5000 --slow 500 --compilers js:babel/register
+--require ./node_modules/ts-node/register
+--require ./node_modules/source-map-support/register
+--recursive
+test/api-test.ts
+test/codec-test.ts
+test/xrp-codec-test.ts
