@@ -275,13 +275,8 @@ exports.encodeSeed = (entropy, algorithm = 'ed25519') => {
         expectedLength: 16,
         versions: algorithm === 'ed25519' ? ED25519_SEED : [FAMILY_SEED]
     };
-    if (entropy.constructor === Uint8Array) {
-        const uint8Entropy = entropy;
-        entropy = Buffer.from(uint8Entropy.buffer);
-    }
-    else if (entropy.constructor === Array) {
-        const numEntropy = entropy;
-        entropy = Buffer.from(numEntropy);
+    if (!Buffer.isBuffer(entropy)) {
+        entropy = Buffer.from(entropy);
     }
     return encode(entropy, opts);
 };

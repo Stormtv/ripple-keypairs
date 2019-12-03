@@ -12,12 +12,12 @@ interface DecodedSeed {
 }
 interface GenerateOpts {
     algorithm?: SignatureType;
-    entropy?: Buffer | number[] | Uint8Array;
+    entropy?: Buffer | number[];
 }
 export declare const isValidHex: (string: string) => boolean;
 export declare const sha512Half: (hashables: (string | Buffer | number[])[]) => Buffer;
 export declare const publicKeyFromPrivateKey: (privateKey: string) => string;
-export declare const encodeSeed: (entropy: Buffer | Uint8Array | number[], algorithm?: SignatureType) => string;
+export declare const encodeSeed: (entropy: Buffer | number[], algorithm?: SignatureType) => string;
 export declare const generateSeed: (options?: GenerateOpts) => string;
 export declare const decodeSeed: (seed: string, opts?: DecodeSeedOpts) => DecodedSeed;
 export declare const deriveKeypair: (encodedSeed: string, accountIndex?: number) => {
@@ -37,7 +37,7 @@ declare const _default: {
     sha512Half: (hashables: (string | Buffer | number[])[]) => Buffer;
     isValidHex: (string: string) => boolean;
     publicKeyFromPrivateKey: (privateKey: string) => string;
-    encodeSeed: (entropy: Buffer | Uint8Array | number[], algorithm?: SignatureType) => string;
+    encodeSeed: (entropy: Buffer | number[], algorithm?: SignatureType) => string;
     generateSeed: (options?: GenerateOpts) => string;
     decodeSeed: (seed: string, opts?: DecodeSeedOpts) => DecodedSeed;
     deriveKeypair: (encodedSeed: string, accountIndex?: number) => {
