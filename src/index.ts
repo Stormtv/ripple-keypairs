@@ -440,11 +440,7 @@ export const deriveKeypair = (
   const decodedSeed = decodeSeed(encodedSeed)
   const seedBytes = decodedSeed.bytes
   if (decodedSeed.type === 'ed25519') {
-    const accountIndexBytes = Buffer.from(
-      accountIndex.toString(16).padStart(8, '0'),
-      'hex'
-    )
-    const hashedPrivateKey = sha512Half([seedBytes, accountIndexBytes])
+    const hashedPrivateKey = sha512Half([seedBytes])
     const privateKey = `ED${hashedPrivateKey.toString('hex').toUpperCase()}`
     const publicKey = publicKeyFromPrivateKey(privateKey)
     return { privateKey, publicKey }
